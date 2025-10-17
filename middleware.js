@@ -19,7 +19,15 @@ export default auth((req)=>{
     if (isApiRoutes) {
         return null;
       }
-    
+    const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard");
+
+if (isDashboardRoute) {
+
+  if (req.auth?.user?.email !== process.env.ADMIN_EMAIL) {
+    return Response.redirect(new URL("/", nextUrl));
+  }
+}
+
       if (isAuthRoutes) {
         if (isLoggedIn) {
           return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));

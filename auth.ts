@@ -1,8 +1,9 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from '@auth/prisma-adapter'
 import { db } from "./lib/db"
 import authConfig from "./auth.config"
-import { getAccountByUserId, getUserById } from "./modules/auth/actions"
+import { getUserById } from "./modules/auth/actions"
+
+type UserRole = "ADMIN" | "USER"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
@@ -13,12 +14,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         where: { email: user.email! },
       });
 
+      // ✅ 1. Determine user role (admin if matches env)
+      const userRole = user.email === process.env.ADMIN_EMAIL ? "ADMIN" : "USER";
+
       if (!existingUser) {
         const newUser = await db.user.create({
           data: {
             email: user.email!,
             name: user.name,
             image: user.image,
+            role: userRole, // ✅ 2. Assign role
             accounts: {
               // @ts-ignore
               create: {
@@ -39,6 +44,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!newUser) return false;
       } else {
+        // ✅ 3. Update role if it's the admin account and not already admin
+        if (
+          user.email === process.env.ADMIN_EMAIL &&
+          existingUser.role !== "ADMIN"
+        ) {
+          await db.user.update({
+            where: { email: user.email! },
+            data: { role: "ADMIN" },
+          });
+        }
+
         // Link social account if not exists
         const existingAccount = await db.account.findUnique({
           where: {
@@ -68,33 +84,34 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
         }
       }
+
       return true;
     },
 
-    async jwt({ token }) {
-      if (!token.sub) return token;
+async jwt({ token }) {
+  if (!token.sub) return token;
 
-      const existingUser = await getUserById(token.sub)
-      if (!existingUser) return token;
+  const existingUser = await getUserById(token.sub);
+  if (!existingUser) return token;
 
-      const exisitingAccount = await getAccountByUserId(existingUser.id);
-      
-      token.name = existingUser.name;
-      token.email = existingUser.email;
-      token.role = existingUser.role;
-      
-      return token;
-    },
+  // Properly set all token fields
+  token.name = existingUser.name;
+  token.email = existingUser.email;
+  token.role = existingUser.role; // Make sure this is set
+  
+  return token;
+},
 
     async session({ session, token }) {
-      if (token.sub && session.user) {
-        session.user.id = token.sub
-      }
-      if (token.sub && session.user) {
-        session.user.role = token.role
-      }
-      return session;
-    }
+  if (session.user && token) {
+    session.user.id = token.sub as string;
+    session.user.name = token.name;
+    session.user.email = token.email as string;
+    session.user.role = token.role as UserRole;
+  }
+  return session;
+}
+
   },
   session: { strategy: "jwt" },
   ...authConfig,

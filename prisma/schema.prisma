@@ -16,11 +16,19 @@ datasource db {
 enum UserRole {
   ADMIN
   USER
-  PREMIUM_USER
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String?
   email     String    @unique
   image     String?
@@ -28,23 +36,57 @@ model User {
   role      UserRole  @default(USER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  order Order[]
 }
 
 model Account {
-  id        String   @id @default(uuid())
-  userId           String
-  type             String
-  provider         String
+  id                String   @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
   providerAccountId String
-  refreshToken     String?
-  accessToken      String?
-  expiresAt        Int?
-  tokenType        String?
-  scope            String?
-  idToken          String?
-  sessionState     String?
-  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken      String?
+  accessToken       String?
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  idToken           String?
+  sessionState      String?
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+}
+
+model Products {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  image       String
+  price       Int
+  isFeatured  Boolean
+  orderItem OrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Order {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  total     Int
+  status    OrderStatus        @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Products @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
 }

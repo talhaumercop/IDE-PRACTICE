@@ -1,0 +1,8 @@
+// import { decode } from "next-auth/jwt"
+
+// const token = await decode({
+//   token: "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiNDhmMjVWT05TM1YyWTloQ1A4QmRHT2FOWmZaYnJFMFo4a3hpejFzSGNfRFZ3Mjl0d2FLcGRDdTBlcXhYWTN5SWlkQm9jdFlIX09SaUtiTkVDTjFiWGcifQ..UcR0u0G61LKmLBosaGrGSQ.a9HZAjNqf-NdnIXg4NOr4QR6Q-a_7fkO8Qf1y4avkO-GODsIwzK9L-sBO1s9QFv9fqlIZ3haR47RcY6_T0A_j0PIrHjTwQBeFsqfdOX2rIfv3OX4f01FpMmNr7BRDo-0NdJV9tuaubFAnWDqw1H9Y8LLDhwGrQFepE66nXfgj2-sZOQ1rwjq528pzOj_MxKZ16ezRtYAIbjRqKjWUg9U1tcDC0arEwnteKJ5AHa74G3Pq17RFw0ikW6SQPK0Bjr6fQlvndFHqEgH6sDwkpJL9qnGJGJrwei4tSWNKFBt6ABRIBZ9YOATY5O8rvhAID_Dh4Yi9ZTNtLl5VJVtFGxGTaqeI1LifYgmzVUOKyCescIUm0YHakkt5Dv1KMdIzaSs.0PWPawD983jJHGRkVioJtwiLD3lu8i7zV0XZaebQXQc",
+//   secret: process.env.AUTH_SECRET, // or NEXTAUTH_SECRET depending on your config
+// })
+
+// console.log(token)
