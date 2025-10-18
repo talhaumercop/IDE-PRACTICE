@@ -19,31 +19,45 @@ export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+const [ratings, setRatings] = useState<{ [key: string]: number }>({});
     useEffect(() => {
         fetchProducts();
     }, []);
 
     const fetchProducts = async () => {
-        try {
-            const response = await fetch('/api/getAllProducts');
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
-            }
+  try {
+    const [productsRes, ratingsRes] = await Promise.all([
+      fetch("/api/getAllProducts"),
+      fetch("/api/review/average/all"),
+    ]);
 
-            const data = await response.json();
-            setProducts(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    if (!productsRes.ok || !ratingsRes.ok) {
+      throw new Error("Failed to fetch products or ratings");
+    }
+
+    const [productsData, ratingsData] = await Promise.all([
+      productsRes.json(),
+      ratingsRes.json(),
+    ]);
+
+    // Map productId -> average rating
+    const ratingsMap: Record<string, number> = {};
+    ratingsData.forEach((r: any) => {
+      ratingsMap[r.productId] = r._avg.rating || 0;
+    });
+
+    setProducts(productsData);
+    setRatings(ratingsMap);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "An error occurred");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                     <p className="mt-4 text-gray-600">Loading products...</p>
@@ -70,7 +84,7 @@ export default function ProductsPage() {
     }
 
     return (
-        <div className="min-h-screen w-[100vw] bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className=" mt-10 w-[100vw] bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
                     <div>
@@ -79,15 +93,6 @@ export default function ProductsPage() {
                         </h1>
                         <p className="mt-2 text-slate-600">Hand-picked items just for you</p>
                     </div>
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="group relative inline-flex items-center justify-center px-6 py-3 overflow-hidden font-medium text-white transition-all duration-300 bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/30"
-                    >
-                        <span className="absolute top-0 right-0 inline-block w-4 h-4 transition-all duration-500 ease-in-out bg-indigo-700 rounded group-hover:-mr-4 group-hover:-mt-4">
-                            <span className="absolute top-0 right-0 w-5 h-5 rotate-45 translate-x-1/2 -translate-y-1/2 bg-white"></span>
-                        </span>
-                        <span className="relative">Add New Product</span>
-                    </button>
                 </div>
 
                 {products.length === 0 ? (
@@ -98,14 +103,6 @@ export default function ProductsPage() {
                             </svg>
                         </div>
                         <h3 className="text-2xl font-bold text-slate-800 mb-2">No products yet</h3>
-                        <p className="text-slate-600 mb-6">Start building your collection today.</p>
-                        <button
-                            onClick={() => router.push('/dashboard')}
-                            className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold transition-colors"
-                        >
-                            Create your first product
-                            <span className="transition-transform group-hover:translate-x-1">→</span>
-                        </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -115,7 +112,7 @@ export default function ProductsPage() {
                                 className="group relative bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-white/30"
                             >
                                 {product.image ? (
-                                    <div className="relative w-full h-56 bg-gray-200">
+                                    <div className="relative w-full h-76 bg-gray-200">
                                         <Image
                                             src={product.image}
                                             alt={product.name}
@@ -166,6 +163,22 @@ export default function ProductsPage() {
                                             onClick={() => router.push(`/product/${product.id}`)}
                                             className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 font-semibold text-sm transition-all group-hover:gap-3"
                                         >
+                                        <div className="flex items-center mb-2">
+  {Array.from({ length: 5 }).map((_, i) => (
+    <svg
+      key={i}
+      className={`w-5 h-5 ${i < Math.round(ratings[product.id] || 0) ? "text-yellow-400" : "text-gray-300"}`}
+      fill="currentColor"
+      viewBox="0 0 20 20"
+    >
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.785.57-1.84-.197-1.54-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z" />
+    </svg>
+  ))}
+  <span className="ml-2 text-sm text-slate-600">
+    {ratings[product.id]?.toFixed(1) || "No rating"}
+  </span>
+</div>
+
                                             View Details
                                             <span className="transition-transform group-hover:translate-x-1">→</span>
                                         </button>

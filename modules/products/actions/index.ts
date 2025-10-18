@@ -5,7 +5,10 @@ import { db } from "@/lib/db"
 export const getProduct = async (id: string) => {
     try {
         const product = await db.products.findUnique({
-            where: { id }
+            where: { id },
+            include:{
+                reviews:true
+            }
         })
         return product
     } catch (error) {

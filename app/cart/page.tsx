@@ -13,25 +13,6 @@ const CartPage = () => {
   if (cart.length === 0) return <h2>Your cart is empty</h2>
 
 
-//   const handleBuyNow = async () => {
-//   try {
-//     const res = await fetch("/api/createOrder", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ cart, total }),
-//     });
-
-//     const data = await res.json();
-
-//     if (!res.ok) throw new Error(data.error || "Order creation failed");
-// clearCart();
-
-//   } catch (err: any) {
-//     alert(err.message);
-//   }
-// };
-
-
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
       <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Your Cart</h1>

@@ -26,7 +26,6 @@ enum OrderStatus {
   CANCELLED
 }
 
-
 model User {
   id        String    @id @default(uuid())
   name      String?
@@ -34,9 +33,10 @@ model User {
   image     String?
   accounts  Account[]
   role      UserRole  @default(USER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  order Order[]
+  order     Order[]
+  reviews   Review[]   // ← one user can leave many reviews
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Account {
@@ -59,15 +59,16 @@ model Account {
 }
 
 model Products {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String
   image       String
   price       Int
   isFeatured  Boolean
-  orderItem OrderItem[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  orderItem   OrderItem[]
+  reviews     Review[]   // ← one product has many reviews
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Order {
@@ -86,7 +87,19 @@ model OrderItem {
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String
-  product   Products @relation(fields: [productId], references: [id])
+  product   Products @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   price     Int
+}
+
+
+model Review {
+  id         String   @id @default(uuid())
+  userId     String
+  productId  String
+  rating     Int       // 1 to 5 stars
+  comment    String?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Products  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
