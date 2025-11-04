@@ -5,11 +5,13 @@ import path from "path";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params; // await this now ✅
+
     const product = await db.products.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!product) {
@@ -25,9 +27,11 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params; // same fix here ✅
+
     const formData = await req.formData();
 
     const name = formData.get("name") as string;
@@ -45,7 +49,7 @@ export async function PATCH(
     }
 
     const updated = await db.products.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description,
